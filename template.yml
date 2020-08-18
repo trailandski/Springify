@@ -1,0 +1,138 @@
+# This is the SAM template that represents the architecture of your serverless application
+# https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-template-basics.html
+
+# The AWSTemplateFormatVersion identifies the capabilities of the template
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/format-version-structure.html
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  springify
+
+# Transform section specifies one or more macros that AWS CloudFormation uses to process your template
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/transform-section-structure.html
+Transform:
+- AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    CodeUri: ./dist
+    Runtime: nodejs12.x
+    Environment:
+      Variables:
+        NODE_OPTIONS: '-r source-map-support/register'
+
+Parameters:
+  SpringboardSubDomain:
+    Type: String
+    Description: The Sub Domain of the Springboard Retail instance Springify should bind to.
+  SpringboardToken:
+    Type: String
+    Description: The Springboard Retail bearer token that Springify should authenticate with.
+
+# Resources declares the AWS resources that you want to include in the stack
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
+Resources:
+  # This is an SQS queue with all default configuration properties. To learn more about the available options, see
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-sqs-queues.html
+  PendingItemsQueue:
+    Type: AWS::SQS::Queue
+    Description: When a Springboard item is changed, it is added to this queue. The Shopify manipulator processes this queue.
+    Properties:
+      FifoQueue: True
+
+  ShopifyManipulator:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Updates Shopify to reflect a change in a Springboard item.
+      Handler: handlers/shopify-manipulator.writeItemUpdateToShopify
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      # This property associates this Lambda function with the SQS queue defined above, so that whenever the queue
+      # receives a message, the Lambda function is invoked
+      Events:
+        SQSQueueEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt PendingItemsQueue.Arn
+            BatchSize: 1
+      MemorySize: 128
+      Timeout: 25 # Chosen to be less than the default SQS Visibility Timeout of 30 seconds
+
+  SpringboardItemListenerEndpoint:
+    Type: AWS::Serverless::HttpApi
+
+  AWSDeploymentListener:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: >-
+        Invoked by deploy.js after the SAM application is successfully deployed to AWS.
+        This function performs initialization tasks like registering webhooks with Springboard and Shopify.
+      Handler: handlers/aws-deployment-listener.onSuccessfulAWSDeployment
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref GeneralKVStore
+        - AWSLambdaBasicExecutionRole
+      Environment:
+        Variables:
+          SpringboardItemListenerEndpoint: !Sub 'https://${SpringboardItemListenerEndpoint}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Springboard/Webhooks/ItemEvent'
+          GeneralKVStoreName: !Ref GeneralKVStore
+          SpringboardSubDomain: !Ref SpringboardSubDomain
+          SpringboardToken: !Ref SpringboardToken
+
+  DailySync:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: >-
+        Queues items that have been changed in the last twenty four hours.
+        Ensures that image modifications get pushed in a timely manner. Springboard does not fire events for image changes.
+      Handler: handlers/daily-sync.performDailySync
+      # 15 minutes is the maximum amount of time that a Lambda function can run.
+      # This should be more than enough time to download and queue all of the items that were changed in the past twenty
+      # four hours.
+      Timeout: 900
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt PendingItemsQueue.QueueName
+      Environment:
+        Variables:
+          QueueUrl: !Ref PendingItemsQueue
+          SpringboardSubDomain: !Ref SpringboardSubDomain
+          SpringboardToken: !Ref SpringboardToken
+      Events:
+        Daily:
+          Type: Schedule
+          Properties:
+            Schedule: rate(24 hours)
+
+  SpringboardItemListener:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Feeds item Update notifications sent by Springboard, into the queue for processing.
+      Handler: handlers/springboard-item-listener.springboardDidSendItemEvent
+      Events:
+        SpringboardItemUpdateEvent:
+          Type: HttpApi
+          Properties:
+            Path: '/Springboard/Webhooks/ItemEvent'
+            Method: Post
+            ApiId: !Ref SpringboardItemListenerEndpoint
+      Environment:
+        Variables:
+          QueueUrl: !Ref PendingItemsQueue
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt PendingItemsQueue.QueueName
+
+  GeneralKVStore:
+    Description: A table for storing miscelanious state.
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: Key
+        Type: String
+
+Outputs:
+  AWSDeploymentListener:
+    Description: The ARN of the lambda function that should be invoked after a new deployment.
+    Value: !Ref AWSDeploymentListener

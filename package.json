@@ -1,0 +1,29 @@
+{
+  "name": "springify",
+  "version": "1.0.0",
+  "description": "Sync Springboard Retail products with Shopify.",
+  "main": "deploy.js",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "source-map-support": "^0.5.19",
+    "springboard-pagination-tool": "^2.0.0",
+    "uuid": "^8.3.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.61",
+    "@types/mocha": "^8.0.2",
+    "@types/node": "^14.0.27",
+    "@types/puppeteer": "^3.0.1",
+    "@types/uuid": "^8.3.0",
+    "aws-sdk": "^2.734.0",
+    "mocha": "^8.1.1",
+    "puppeteer": "^5.2.1"
+  },
+  "scripts": {
+    "test": "tsc && mocha -r source-map-support/register dist/**/*.test.js",
+    "build": "tsc && cp package.json dist/package.json && rm -rf dist/*.test.* && sam build",
+    "deploy": "node deploy.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
