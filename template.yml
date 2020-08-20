@@ -1,14 +1,7 @@
-# This is the SAM template that represents the architecture of your serverless application
-# https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-template-basics.html
-
-# The AWSTemplateFormatVersion identifies the capabilities of the template
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/format-version-structure.html
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   springify
 
-# Transform section specifies one or more macros that AWS CloudFormation uses to process your template
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/transform-section-structure.html
 Transform:
 - AWS::Serverless-2016-10-31
 
@@ -23,41 +16,90 @@ Globals:
 Parameters:
   SpringboardSubDomain:
     Type: String
-    Description: The Sub Domain of the Springboard Retail instance Springify should bind to.
+    Description: The DNS subdomain of the Springboard Retail instance Springify should bind to.
   SpringboardToken:
     Type: String
     Description: The Springboard Retail bearer token that Springify should authenticate with.
+  ShopifySubDomain:
+    Type: String
+    Description: The DNS subdomain of the Shopify instance that Springify should bind to.
+  ShopifyKey:
+    Type: String
+    Description: The API key for authenticating with the Shopify API.
+  ShopifyAppPassword:
+    Type: String
+    Description: The password given to our app by the Shopify API.
+  SpringifySecurityGroupIds:
+    Type: CommaDelimitedList
+  SpringifySubnetIds:
+    Type: CommaDelimitedList
 
-# Resources declares the AWS resources that you want to include in the stack
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
 Resources:
-  # This is an SQS queue with all default configuration properties. To learn more about the available options, see
-  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-sqs-queues.html
+  BottleneckDatabaseSG:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: Subnet Group for BottleneckDatabase.
+      SubnetIds: !Ref SpringifySubnetIds
+
+  BottleneckDatabase:
+    Type: AWS::ElastiCache::CacheCluster
+    Properties:
+      CacheNodeType: cache.t2.micro
+      Engine: redis
+      NumCacheNodes: 1
+      VpcSecurityGroupIds: !Ref SpringifySecurityGroupIds
+      CacheSubnetGroupName: !Ref BottleneckDatabaseSG
+
+  # When a Springboard item is changed, it is added to this queue. The Shopify manipulator processes this queue.
   PendingItemsQueue:
     Type: AWS::SQS::Queue
-    Description: When a Springboard item is changed, it is added to this queue. The Shopify manipulator processes this queue.
+    Properties:
+      VisibilityTimeout: 60
+      FifoQueue: True
+      RedrivePolicy:
+        deadLetterTargetArn:
+          Fn::GetAtt:
+            - "FailedItemUpdatesQueue"
+            - "Arn"
+        maxReceiveCount: 1
+
+  # Item updates that cannot be completed are added to this queue.
+  FailedItemUpdatesQueue:
+    Type: AWS::SQS::Queue
     Properties:
       FifoQueue: True
+
 
   ShopifyManipulator:
     Type: AWS::Serverless::Function
     Properties:
       Description: Updates Shopify to reflect a change in a Springboard item.
-      Handler: handlers/shopify-manipulator.writeItemUpdateToShopify
+      Handler: handlers/shopify-manipulator.processItemUpdateEvents
       Policies:
         - AWSLambdaBasicExecutionRole
-      # This property associates this Lambda function with the SQS queue defined above, so that whenever the queue
-      # receives a message, the Lambda function is invoked
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SkuVariantMap
+      Environment:
+        Variables:
+          SkuVariantMapTableName: !Ref SkuVariantMap
+          ShopifySubDomain: !Ref ShopifySubDomain
+          ShopifyAppPassword: !Ref ShopifyAppPassword
+          ShopifyKey: !Ref ShopifyKey
+          BottleneckDatabasePort: !GetAtt BottleneckDatabase.RedisEndpoint.Port
+          BottleneckDatabaseAddress: !GetAtt BottleneckDatabase.RedisEndpoint.Address
       Events:
         SQSQueueEvent:
           Type: SQS
           Properties:
             Queue: !GetAtt PendingItemsQueue.Arn
             BatchSize: 1
-      MemorySize: 128
-      Timeout: 25 # Chosen to be less than the default SQS Visibility Timeout of 30 seconds
+      MemorySize: 1280
+      Timeout: 60
+      VpcConfig:
+        SecurityGroupIds: !Ref SpringifySecurityGroupIds
+        SubnetIds: !Ref SpringifySubnetIds
 
-  SpringboardItemListenerEndpoint:
+  SpringboardItemListenerHttpApi:
     Type: AWS::Serverless::HttpApi
 
   AWSDeploymentListener:
@@ -73,10 +115,33 @@ Resources:
         - AWSLambdaBasicExecutionRole
       Environment:
         Variables:
-          SpringboardItemListenerEndpoint: !Sub 'https://${SpringboardItemListenerEndpoint}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Springboard/Webhooks/ItemEvent'
+          SpringboardItemListenerEndpoint: !Sub 'https://${SpringboardItemListenerHttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Springboard/Webhooks/ItemEvent'
           GeneralKVStoreName: !Ref GeneralKVStore
           SpringboardSubDomain: !Ref SpringboardSubDomain
           SpringboardToken: !Ref SpringboardToken
+  MonthlySync:
+    Type: AWS::Serverless::Function
+    Properties:
+      Timeout: 60
+      Description: >-
+        Queues all items stored in Springboard Retail.
+      Handler: handlers/monthly-sync.performMonthlySync
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - LambdaInvokePolicy:
+            FunctionName: ''
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt PendingItemsQueue.QueueName
+      Environment:
+        Variables:
+          QueueUrl: !Ref PendingItemsQueue
+          SpringboardSubDomain: !Ref SpringboardSubDomain
+          SpringboardToken: !Ref SpringboardToken
+      Events:
+        Monthly:
+          Type: Schedule
+          Properties:
+            Schedule: rate(30 days)
 
   DailySync:
     Type: AWS::Serverless::Function
@@ -107,7 +172,7 @@ Resources:
   SpringboardItemListener:
     Type: AWS::Serverless::Function
     Properties:
-      Description: Feeds item Update notifications sent by Springboard, into the queue for processing.
+      Description: Feeds item update notifications sent by Springboard into the queue for processing.
       Handler: handlers/springboard-item-listener.springboardDidSendItemEvent
       Events:
         SpringboardItemUpdateEvent:
@@ -115,21 +180,35 @@ Resources:
           Properties:
             Path: '/Springboard/Webhooks/ItemEvent'
             Method: Post
-            ApiId: !Ref SpringboardItemListenerEndpoint
+            ApiId: !Ref SpringboardItemListenerHttpApi
       Environment:
         Variables:
           QueueUrl: !Ref PendingItemsQueue
+          SpringboardSubDomain: !Ref SpringboardSubDomain
+          SpringboardToken: !Ref SpringboardToken
       Policies:
         - AWSLambdaBasicExecutionRole
         - SQSSendMessagePolicy:
             QueueName: !GetAtt PendingItemsQueue.QueueName
 
+  # A table for storing miscellaneous application state.
   GeneralKVStore:
-    Description: A table for storing miscelanious state.
     Type: AWS::Serverless::SimpleTable
     Properties:
       PrimaryKey:
         Name: Key
+        Type: String
+
+  # A table for storing associations between SKUs and Shopify Variants.
+  # When a Springboard item is updated, the corresponding Shopify variant can be found using this table.
+  # If no association is found, then the item must not have been published to the store before.
+  SkuVariantMap:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      # Also known as 'public_id' in Springboard Retail POS terms.
+      # In Shopify terms this is a 'sku'
+      PrimaryKey:
+        Name: Sku
         Type: String
 
 Outputs:

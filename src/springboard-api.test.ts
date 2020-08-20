@@ -15,7 +15,7 @@ import { readFileSync } from 'fs';
 const sleep = util.promisify(setTimeout);
 
 // Our development instance of Springboard Retail
-const stagingConfig = JSON.parse(readFileSync(__dirname + '/../configs/staging.json').toString());
+const stagingConfig = JSON.parse(readFileSync(__dirname + '/../instances/staging.json').toString());
 const springboardCredentials = {
     token: stagingConfig.samArgs.SpringboardToken,
     subDomain: stagingConfig.samArgs.SpringboardSubDomain

@@ -5,11 +5,16 @@
   "main": "deploy.js",
   "dependencies": {
     "axios": "^0.19.2",
+    "bottleneck": "^2.19.5",
+    "jimp": "^0.16.0",
+    "jsdom": "^16.4.0",
+    "redis": "^3.0.2",
     "source-map-support": "^0.5.19",
-    "springboard-pagination-tool": "^2.0.0",
+    "springboard-pagination-tool": "^2.1.0",
     "uuid": "^8.3.0"
   },
   "devDependencies": {
+    "@types/jsdom": "^16.2.3",
     "@types/aws-lambda": "^8.10.61",
     "@types/mocha": "^8.0.2",
     "@types/node": "^14.0.27",
@@ -21,7 +26,7 @@
   },
   "scripts": {
     "test": "tsc && mocha -r source-map-support/register dist/**/*.test.js",
-    "build": "tsc && cp package.json dist/package.json && rm -rf dist/*.test.* && sam build",
+    "build": "./build.sh",
     "deploy": "node deploy.js"
   },
   "author": "",

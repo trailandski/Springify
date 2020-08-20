@@ -1,0 +1,158 @@
+sub_class,name,shipping_level
+A110,Blouses,3
+A120,Shorts,3
+A130,Pants,3
+A140,Dress,3
+A150,Athletic Shirt,3
+A160,Athletic Bottoms,3
+A180,Bathing Suit,3
+B210,Collared Shirts,3
+B220,Everyday Tees,3
+B230,Performance Tees,3
+B240,Henleys,3
+B250,Athletic Shirt,3
+C210,Shorts,3
+C215,Bathing Suit,3
+C220,Pants,3
+C230,Athletic Bottoms,3
+D110,Ski Jacket,10
+D120,Ski Pants,6
+D130,Snow Boots,
+D210,Ski Jacket,10
+D220,Ski Pants,6
+D230,Snow Boots,11
+D310,Kids Ski Apparel,6
+D330,Snow Boots,11
+E010,Ski Socks,1
+E020,Ski Gloves/Mittens,1
+E030,Gloves,1
+E040,Gloves,1
+E050,Ski Goggles,5
+E060,Knit Hat,1
+E070,Neckwarmers/Earbands,1
+E080,Scarfs,
+E350,Kids Ski Accessories,1
+F110,Jacket,7
+F120,Vest,5
+F130,Fleece,5
+F140,UV-Resistent Shirts,5
+F210,Jacket,7
+F220,Vest,5
+F230,Fleece,5
+F240,UV-Resistent Shirts,5
+F310,Jacket,5
+G110,Rain Jacket,5
+G120,Rain Pants,5
+G210,Rain Jacket,5
+G220,Rain Pants,5
+H110,Backpacking Tents,20
+H115,Carcamping Tents,20
+H120,Tent Accessories,5
+H210,Hammock,10
+H220,Hammock,5
+H230,Hammock Straps and Accessories,5
+H310,Down Sleeping Bag,10
+H315,Synthetic Sleeping Bag,10
+H320,Sleeping Pad,12
+H330,Pillow,5
+H340,Sleeping Bag Liner,5
+H350,Sleeping Bag Accessories,
+J100,Day Pack,25
+J115,Book Bag,25
+J200,Hiking Pack,30
+J300,Hydration Pack,25
+J400,Backpack Accessories,5
+J500,Travel Pack,30
+J600,Fanny Pack,5
+J700,Shoulder Bag,15
+J800,Luggage,40
+J900,Hand Bag,15
+K110,Underwear,5
+K120,Thermal Underwear,5
+K210,Underwear,5
+K220,Thermal Underwear,5
+L100,Hat,1
+L200,Hat,4
+L310,Sunglasses,2
+L320,Sunglasses,2
+L330,Sunglasses,1
+L400,Buffs/Bandanas,3
+L500,Watches,3
+L600,Footbeds,3
+L700,Belts,3
+L800,Gaiters,5
+L900,Wallets,1
+M110,Sandals,11
+M120,Sandals,11
+M210,Sandals,11
+M220,Sandals,11
+M300,Sandals,11
+N110,Non-waterproof Light Hiker,11
+N120,Waterproof Light Hiker,11
+N130,Lifestyle Shoes,11
+N210,Non-waterproof Light Hiker,11
+N220,Waterproof Light Hiker,11
+N230,Lifestyle Shoes,11
+N300,Kids Shoes,11
+O110,Road Runner,11
+O120,Non-waterproof Trail Runner,11
+O130,Waterproof Trail Runner,11
+O210,Road Runner,11
+O220,Non-waterproof Trail Runner,11
+O230,Waterproof Trail Runner,11
+P100,Hiking Boots,11
+P200,Hiking Boots,11
+P300,Hiking Boots,11
+R101,Stoves,6
+R102,Stoves,1
+R103,,10
+R104,Cook Kits/Cutlery,6
+R105,Water Filtration,6
+R106,Water Filtration,3
+R107,Camp Furniture,20
+R108,Trail Map,1
+R109,Book,2
+R110,Travel Accessories,1
+R111,Instruments,17
+R112,Food,5
+R113,Stuff Sack,2
+R114,Compression Sack,2
+R115,Dry Sack,2
+R116,Bottle,5
+R117,Flashlight/Headlamp,2
+R118,Trekking Poles,11
+R119,Climbing,5
+R120,Towels,5
+R121,Power Bank,3
+R122,Bug Repellent,3
+R123,Knives/Multi-tools,1
+R124,Shoe Lace,1
+R125,Camp Furniture,1
+R126,Chemical Repair,3
+R127,Compass,1
+R128,Rope,
+R129,First Aid,1
+R130,,1
+R131,,1
+R132,Water Bladder,5
+R133,Sunscreen,2
+R134,Cooler,10
+R200,,
+S110,Hiking Socks,1
+S120,Running Socks,1
+S130,Lifestyle Socks,1
+S210,Hiking Socks,1
+S220,Running Socks,1
+S230,Lifestyle Socks,1
+T,,
+1,,-2
+2,,-2
+3,,-2
+4,,
+T100,Paddle Board,-1
+T200,Paddle Board,
+T300,Paddle Board,-1
+T400,,
+T500,Roof Racks/Trailers,
+T600,,
+T700,,

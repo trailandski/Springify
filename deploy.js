@@ -5,15 +5,16 @@ const AWS = require('aws-sdk');
 /**
  * @property awsStackName
  * @property awsRegion
+ * @property samArgs
  */
-const config = JSON.parse(readFileSync(`configs/${process.argv[2]}.json`).toString());
+const instance = JSON.parse(readFileSync(`instances/${process.argv[2]}.json`).toString());
 
-AWS.config.region = config.awsRegion;
+AWS.config.region = instance.awsRegion;
 
 function deployToAWS() {
     let stringifiedArgs = '';
 
-    for (const [key, value] of Object.entries(config.samArgs)) {
+    for (const [key, value] of Object.entries(instance.samArgs)) {
         stringifiedArgs += `${key}=\"${value}\" `;
     }
 
@@ -22,9 +23,9 @@ function deployToAWS() {
         'sam deploy',
         '--no-confirm-changeset',
         `--parameter-overrides ${stringifiedArgs}`,
-        `--stack-name ${config.awsStackName}`,
-        `--s3-prefix ${config.awsStackName}`,
-        `--region ${config.awsRegion}`
+        `--stack-name ${instance.awsStackName}`,
+        `--s3-prefix ${instance.awsStackName}`,
+        `--region ${instance.awsRegion}`
     );
 
 
@@ -36,7 +37,7 @@ async function invokePostDeploymentHook() {
     // Get the name of the function.
     const cloudFormation = new AWS.CloudFormation();
     const stack = (await cloudFormation.describeStacks({
-        StackName: config.awsStackName
+        StackName: instance.awsStackName
     }).promise()).Stacks[0];
 
     // Invoke the function.

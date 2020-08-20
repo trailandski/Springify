@@ -4,10 +4,11 @@ import { GetItemInput } from 'aws-sdk/clients/dynamodb';
 import { createSpringboardApiClient } from '../springboard';
 import { AxiosInstance } from 'axios';
 
-const springboard: AxiosInstance = createSpringboardApiClient();
+const dynamoDB = new AWS.DynamoDB();
 
-export const onSuccessfulAWSDeployment: Handler = (event, context, callback) => {
-    const dynamoDB = new AWS.DynamoDB();
+const registerSpringboardEventHandlers = async () => {
+    const springboard: AxiosInstance = createSpringboardApiClient();
+
     const query: GetItemInput = {
         Key: {
             'Key': {
@@ -17,14 +18,8 @@ export const onSuccessfulAWSDeployment: Handler = (event, context, callback) => 
         TableName: process.env.GeneralKVStoreName!
     };
 
-    dynamoDB.getItem(query, (err, data) => {
-        if (err) {
-            console.warn('Springboard event handlers might not be registered.');
-            console.error(err);
-            return;
-        }
-
-        const webHookId = data.Item?.Value.S;
+    try {
+        const webHookId = (await dynamoDB.getItem(query).promise()).Item?.Value.S;
 
         if (!webHookId) {
             console.info('No Springboard event handler found. Registering one now...');
@@ -32,27 +27,37 @@ export const onSuccessfulAWSDeployment: Handler = (event, context, callback) => 
                 url: process.env.SpringboardItemListenerEndpoint,
                 events: ['item_updated', 'item_created']
             };
-            springboard.post('webhooks', webhook)
-                // Save the webhook id in our application's key value store.
-                // This way we will know not to register another webhook upon the next deployment.
-                .then(response => dynamoDB.putItem({
-                    TableName: process.env.GeneralKVStoreName!,
-                    Item: {
-                        Key: {
-                            S: 'SpringboardItemListenerWebhookId'
-                        },
-                        Value: {
-                            S: response.data.id.toString()
-                        }
-                    }
-                }).promise())
-                .then(() => callback())
-                .catch(error => {
-                    console.warn('Could not register Springboard event handler.');
-                    console.warn('Instant product updates are disabled.');
-                    console.error(error);
-                })
-        }
-    });
 
+            const response = await springboard.post('webhooks', webhook);
+
+            // Save the webhook id in our application's key value store.
+            // This way we will know not to register another webhook upon the next deployment.
+            await dynamoDB.putItem({
+                TableName: process.env.GeneralKVStoreName!,
+                Item: {
+                    Key: {
+                        S: 'SpringboardItemListenerWebhookId'
+                    },
+                    Value: {
+                        S: response.data.id.toString()
+                    }
+                }
+            }).promise();
+        }
+    } catch (error) {
+        console.warn('Springboard event handlers might not be registered.');
+        console.warn('Instant product updates might not be enabled.');
+        console.error(error);
+    }
+};
+
+const registerShopifyEventHandlers = async () => {
+
+};
+
+export const onSuccessfulAWSDeployment: Handler = async (event, context) => {
+    await Promise.all([
+        registerSpringboardEventHandlers(),
+        registerShopifyEventHandlers()
+    ]);
 };
