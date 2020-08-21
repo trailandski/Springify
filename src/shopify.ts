@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import Image from 'jimp';
 import AWS from 'aws-sdk';
 import { downloadImage } from './image';
@@ -242,16 +242,16 @@ export class BetterProductApi {
         } else {
             // Delete the variant.
             await this.delete(`products/${product.id}/variants/${variant.id}.json`);
+
+            // If there is an image attached to this variant, and no other variants depend on this image, delete the image.
+            const attachedImage = product.images.find(image => image.variant_ids.includes(variant.id));
+            if (attachedImage && attachedImage.variant_ids.length === 1) {
+                await this.delete(`products/${product.id}/images/${attachedImage.id}.json`);
+            }
         }
 
         // Remove the SKU association from our database.
         await this.deleteAssociation(sku);
-
-        // If there is an image attached to this variant, and no other variants depend on this image, delete the image.
-        const attachedImage = product.images.find(image => image.variant_ids.includes(variant.id));
-        if (attachedImage && attachedImage.variant_ids.length === 1) {
-            await this.delete(`products/${product.id}/images/${attachedImage.id}.json`);
-        }
     }
 
     /**
@@ -289,7 +289,17 @@ export class BetterProductApi {
      * @param product initial product properties
      */
     async createProduct(product: any): Promise<ShopifyProduct> {
-        const response = await this.post('products.json', { product });
+        let response: AxiosResponse;
+
+        try {
+            response = await this.post('products.json', { product });
+        } catch (error) {
+            // Knowing exactly what we sent Shopify should be extremely helpful when debugging product
+            // creation errors.
+            console.error(product);
+            throw error;
+        }
+
 
         // Create the SKU-association in our database.
         await this.dynamoDb.putItem({

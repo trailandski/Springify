@@ -14,7 +14,13 @@ export const attachItemDetails = async (item) => {
     }
 
     if (item.primary_image_id) {
-        item.primary_image = (await springboard.get(`items/${item.id}/images/${item.primary_image_id}`)).data;
+        try {
+            item.primary_image = (await springboard.get(`items/${item.id}/images/${item.primary_image_id}`)).data;
+        } catch (error) {
+            console.error(`Item #${item.public_id} referred an image that did not actually exist.`);
+            console.error(error)
+        }
+
     }
 };
 
