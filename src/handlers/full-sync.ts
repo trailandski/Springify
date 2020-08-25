@@ -3,7 +3,7 @@ import * as springboardPageTools from 'springboard-pagination-tool';
 import * as AWS from 'aws-sdk';
 import { addItemsToQueue } from './daily-sync';
 
-export const performMonthlySync: Handler = async (event, context) => {
+export const performFullSync: Handler = async (event, context) => {
     let itemFilter = {};
 
     if (event.itemFilter) {

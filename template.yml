@@ -119,13 +119,13 @@ Resources:
           GeneralKVStoreName: !Ref GeneralKVStore
           SpringboardSubDomain: !Ref SpringboardSubDomain
           SpringboardToken: !Ref SpringboardToken
-  MonthlySync:
+  FullSync:
     Type: AWS::Serverless::Function
     Properties:
       Timeout: 60
       Description: >-
         Queues all items stored in Springboard Retail.
-      Handler: handlers/monthly-sync.performMonthlySync
+      Handler: handlers/full-sync.performFullSync
       Policies:
         - AWSLambdaBasicExecutionRole
         - LambdaInvokePolicy:
@@ -138,10 +138,10 @@ Resources:
           SpringboardSubDomain: !Ref SpringboardSubDomain
           SpringboardToken: !Ref SpringboardToken
       Events:
-        Monthly:
+        EveryThreeMonths:
           Type: Schedule
           Properties:
-            Schedule: rate(30 days)
+            Schedule: rate(90 days)
 
   DailySync:
     Type: AWS::Serverless::Function
