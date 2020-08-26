@@ -121,6 +121,8 @@ const convertSpringboardItemToShopifyVariant = async (itemEvent) => {
             console.warn(`${inlineShippingLevel} is not a valid Shipping Level.`);
             console.warn('Consult the README.md file for an a primer on Shipping Levels.');
             console.warn(`Falling back to Shipping Level of ${shippingLevel} instead.`);
+        } else {
+            shippingLevel = inlineShippingLevel;
         }
 
     }
