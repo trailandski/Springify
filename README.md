@@ -38,10 +38,7 @@ Shipping levels can be configured at two different stages.
 1. *configs/product-types.csv*: Applies shipping levels to products based on sub class.
 2. *Shipping Level Custom Field*: Applies shipping levels to specific items. A shipping level given at this level will override *configs/product-types.csv*.
 ### What if a shipping level is not specified in the config file or at the item level?
-In that case, the item will still be published to Shopify. However, the item will be marked as 
-"In-Store Pickup" I think this is the best solution. Itt makes the problem easy to spot, 
-and customers are still able to shop for the item.
-
+In that case, the item will still be published to Shopify. The item will be assigned a default shipping level of 1.
 
 ## Pricing
 To prevent MAP breakage, Springify requires that all item's have a set MAP threshold. You can set the
