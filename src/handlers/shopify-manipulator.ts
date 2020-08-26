@@ -124,6 +124,13 @@ const convertSpringboardItemToShopifyVariant = async (itemEvent) => {
         }
 
     }
+    if (shippingLevel !== 0 && !shippingLevel) {
+        console.warn('No default or inline shipping level has been set.');
+        console.warn('Using emergency fallback shipping level of 1. ');
+        console.warn('You should configure specify a shipping level for this product immediately. Otherwise' +
+            ' customers may be undercharged for shipping.');
+        shippingLevel = 1;
+    }
     if (shippingLevel === -1) {
         throw new UnpublishableItemError(itemEvent, 'Shipping level is set to -1.')
     }
