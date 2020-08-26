@@ -104,7 +104,7 @@ const convertSpringboardItemToShopifyVariant = async (itemEvent) => {
     };
 
     // Shipping Level Logic
-    let shippingLevel = -2;
+    let shippingLevel;
     if (type && type.shippingLevel) {
         shippingLevel = type.shippingLevel;
     } else {
@@ -129,7 +129,7 @@ const convertSpringboardItemToShopifyVariant = async (itemEvent) => {
     if (shippingLevel !== 0 && !shippingLevel) {
         console.warn('No default or inline shipping level has been set.');
         console.warn('Using emergency fallback shipping level of 1. ');
-        console.warn('You should configure specify a shipping level for this product immediately. Otherwise' +
+        console.warn('You should specify a shipping level for this product immediately. Otherwise' +
             ' customers may be undercharged for shipping.');
         shippingLevel = 1;
     }
