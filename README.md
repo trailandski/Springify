@@ -1,6 +1,10 @@
 # Springify
 Realtime product synchronization between Springboard Retail and Shopify.
 
+# Author
+Duncan Proctor
+dbp19a@my.fsu.edu
+
 
 ## Features
 - Instant updates via Springboard Retail webhooks.
