@@ -18,13 +18,15 @@ function deployToAWS() {
         stringifiedArgs += `${key}=\"${value}\" `;
     }
 
+    const awsStackName = instance['awsStackName'];
     const deployCommand = [];
+
     deployCommand.push(
         'sam deploy',
         '--no-confirm-changeset',
         `--parameter-overrides ${stringifiedArgs}`,
-        `--stack-name ${instance.awsStackName}`,
-        `--s3-prefix ${instance.awsStackName}`,
+        `--stack-name ${awsStackName}`,
+        `--s3-prefix ${awsStackName}`,
         `--region ${instance.awsRegion}`
     );
 

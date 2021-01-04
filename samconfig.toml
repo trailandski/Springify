@@ -1,0 +1,6 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-4lyrwnn6wem6"
+capabilities = "CAPABILITY_IAM"

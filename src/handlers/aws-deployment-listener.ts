@@ -57,7 +57,7 @@ const registerShopifyEventHandlers = async () => {
 
 export const onSuccessfulAWSDeployment: Handler = async (event, context) => {
     await Promise.all([
-        registerSpringboardEventHandlers(),
+        // registerSpringboardEventHandlers(),
         registerShopifyEventHandlers()
     ]);
 };

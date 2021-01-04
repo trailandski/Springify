@@ -40,14 +40,20 @@ const getShopifyProductOptionsBasedOnSpringboardItem = (itemEvent) => {
     const options = [];
 
     // The Springboard custom fields that are to be used as Shopify Product Options.
-    const customFieldsToUse = ['size', 'color'];
+    const customFieldsToUse = ['size', 'color', 'length'];
 
     for (const customFieldName of customFieldsToUse) {
         // Get the value stored in that custom field.
         const value = itemEvent.custom[customFieldName];
 
         if (value) {
-            options.push({ name: customFieldName, value });
+            let name = customFieldName;
+
+            if (name === 'length') {
+                name = '2nd Dimension'
+            }
+
+            options.push({ name, value });
         }
     }
 
@@ -94,8 +100,8 @@ const convertSpringboardItemToShopifyVariant = async (itemEvent) => {
         option2: optionValues[1],
         option3: optionValues[2],
         barcode: itemEvent.custom.upc_gtin,
-        fulfillment_service: 'springboard-retail',
-        inventory_management: 'springboard-retail',
+        fulfillment_service: 'manual',
+        inventory_management: 'shopify',
         compare_at_price: itemEvent.original_price,
         weight_unit: "kg",
         // OOSP Policy a.k.a Online Out-of-Stock Purchase Policy
