@@ -100,7 +100,7 @@ const convertSpringboardItemToShopifyVariant = async (itemEvent) => {
         option2: optionValues[1],
         option3: optionValues[2],
         barcode: itemEvent.custom.upc_gtin,
-        fulfillment_service: 'manual',
+        fulfillment_service: 'springboard-retail',
         inventory_management: 'shopify',
         compare_at_price: itemEvent.original_price,
         weight_unit: "kg",
