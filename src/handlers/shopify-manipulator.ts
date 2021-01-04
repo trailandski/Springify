@@ -160,7 +160,7 @@ const convertSpringboardItemToShopifyVariant = async (itemEvent) => {
     {
         const allowBelowMAPPrice = itemEvent.custom.map === 'Not Enforced';
         let mapThreshold = parseInt(itemEvent.custom.minimum_advertrised_price);
-        if (isNaN(mapThreshold)) {
+        if (isNaN(mapThreshold) || mapThreshold === null) {
             mapThreshold = itemEvent.original_price;
         }
         if (!allowBelowMAPPrice && !mapThreshold) {
